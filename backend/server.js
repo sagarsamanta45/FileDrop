@@ -5,6 +5,7 @@ const os = require('os');
 const { ExpressPeerServer } = require('peer');
 
 const app = express();
+app.enable('trust proxy');
 const server = http.createServer(app);
 const port = process.env.PORT || 9000;
 
@@ -62,13 +63,19 @@ function getLocalNetworkIp() {
 // Health & LAN discovery endpoint for frontend auto-configuration & QR generation
 app.get(['/health', '/api/info'], (req, res) => {
   const localIp = getLocalNetworkIp();
+  const host = req.get('host') || `localhost:${port}`;
+  const isHttps = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https';
+  const baseUrl = `${isHttps ? 'https' : 'http'}://${host}`;
+  const isCloud = !host.includes('localhost') && !host.includes('127.0.0.1') && !host.startsWith('192.168.') && !host.startsWith('10.') && !host.startsWith('172.');
+
   res.json({
     status: 'ok',
     service: 'filedrop',
     port,
     localIp,
-    desktopUrl: `http://localhost:${port}`,
-    mobileUrl: `http://${localIp}:${port}`
+    desktopUrl: isCloud ? baseUrl : `http://localhost:${port}`,
+    mobileUrl: isCloud ? baseUrl : `http://${localIp}:${port}`,
+    isCloud
   });
 });
 

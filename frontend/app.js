@@ -120,16 +120,17 @@ async function checkServerStatus() {
   try {
     const isHttp = window.location.protocol.startsWith('http');
     const host = window.location.hostname || 'localhost';
-    const currentPort = window.location.port ? parseInt(window.location.port, 10) : (window.location.protocol === 'https:' ? 443 : 80);
+    const isHttps = window.location.protocol === 'https:';
+    const currentPort = window.location.port ? parseInt(window.location.port, 10) : (isHttps ? 443 : 80);
 
-    // 1. Check current origin if served over HTTP
+    // 1. Check current origin if served over HTTP/HTTPS
     if (isHttp) {
       try {
-        const resp = await fetch(`/api/info`, { signal: AbortSignal.timeout(1200) });
+        const resp = await fetch(`/api/info`, { signal: AbortSignal.timeout(1500) });
         if (resp.ok) {
           const info = await resp.json();
           applyServerInfo(info, host, currentPort);
-          updateServerBadge('online', `Local Server (${host}:${currentPort})`);
+          updateServerBadge('online', isHttps ? `Cloud Server (${host})` : `Local Server (${host}:${currentPort})`);
           return;
         }
       } catch (e) {}
@@ -158,8 +159,8 @@ function applyServerInfo(info, host, port) {
   if (!info) return;
   serverInfo.localIp = info.localIp || host;
   serverInfo.port = info.port || port;
-  serverInfo.desktopUrl = info.desktopUrl || `http://localhost:${serverInfo.port}`;
-  serverInfo.mobileUrl = info.mobileUrl || `http://${serverInfo.localIp}:${serverInfo.port}`;
+  serverInfo.desktopUrl = info.desktopUrl || window.location.origin;
+  serverInfo.mobileUrl = info.mobileUrl || window.location.origin;
   
   const modalInput = document.getElementById('modal-mobile-url');
   if (modalInput) {
@@ -180,19 +181,20 @@ function getConnectUrl(code) {
 async function getPeerConfig() {
   const isHttp = window.location.protocol.startsWith('http');
   const host = window.location.hostname || 'localhost';
-  const currentPort = window.location.port ? parseInt(window.location.port, 10) : (window.location.protocol === 'https:' ? 443 : 80);
+  const isHttps = window.location.protocol === 'https:';
+  const currentPort = window.location.port ? parseInt(window.location.port, 10) : (isHttps ? 443 : 80);
 
-  // 1. If currently served directly on the backend server (port 9000)
-  if (isHttp && currentPort === 9000) {
+  // 1. If currently served directly on this server (works on both local port 9000 & cloud HTTPS)
+  if (isHttp) {
     try {
-      const resp = await fetch(`/filedrop/peerjs/id`, { signal: AbortSignal.timeout(1200) });
+      const resp = await fetch(`/filedrop/peerjs/id`, { signal: AbortSignal.timeout(1500) });
       if (resp.ok) {
-        updateServerBadge('online', `Local Server (${host}:9000)`);
+        updateServerBadge('online', isHttps ? `Cloud Server (${host})` : `Local Server (${host}:${currentPort})`);
         return {
           host: host,
-          port: 9000,
+          port: currentPort,
           path: '/filedrop',
-          secure: window.location.protocol === 'https:',
+          secure: isHttps,
           config: { iceServers: BASE_ICE_SERVERS },
           debug: 1
         };
