@@ -1,0 +1,14 @@
+{
+  "name": "filedrop",
+  "version": "1.0.0",
+  "description": "Instant P2P file transfer",
+  "scripts": {
+    "start": "node backend/server.js",
+    "server": "node backend/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "peer": "^1.0.2"
+  }
+}
+

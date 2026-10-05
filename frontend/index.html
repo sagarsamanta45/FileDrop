@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="theme-color" content="#080c14">
+  <meta name="description" content="FileDrop — Ultra-fast, encrypted P2P file and text transfer between Android, PC, Mac, and any device on your Wi-Fi or Internet without cloud storage.">
+  <title>FileDrop — Instant P2P Transfer & Clipboard</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Local high-speed offline vendor libraries with CDN fallback -->
+  <script src="vendor/peerjs.min.js"></script>
+  <script>
+    if (typeof Peer === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"><\/script>');
+    }
+  </script>
+  <script src="vendor/qrcode.min.js"></script>
+  <script>
+    if (typeof QRCode === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+    }
+  </script>
+</head>
+<body>
+
+<!-- Ambient decorative background mesh & glow -->
+<div class="ambient-glow orb-1" aria-hidden="true"></div>
+<div class="ambient-glow orb-2" aria-hidden="true"></div>
+<div class="ambient-glow orb-3" aria-hidden="true"></div>
+
+<!-- Top Sticky / Adaptive Header Bar -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand" onclick="resetAll()" role="button" tabindex="0" title="Return to Home">
+      <div class="logo-mark">
+        <svg class="logo-svg" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 4L34 12V28L20 36L6 28V12L20 4Z" stroke="url(#logo-grad)" stroke-width="2.5" fill="rgba(0, 240, 255, 0.08)"/>
+          <path d="M20 11L28 16V24L20 29L12 24V16L20 11Z" fill="url(#logo-grad-inner)"/>
+          <defs>
+            <linearGradient id="logo-grad" x1="6" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00f0ff"/>
+              <stop offset="1" stop-color="#8b5cf6"/>
+            </linearGradient>
+            <linearGradient id="logo-grad-inner" x1="12" y1="11" x2="28" y2="29" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00f0ff"/>
+              <stop offset="1" stop-color="#10b981"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">File<span>Drop</span></div>
+        <div class="brand-tagline">P2P DIRECT</div>
+      </div>
+    </div>
+
+    <!-- Center Navigation Tabs for quick switching across all screen sizes -->
+    <nav class="header-nav" aria-label="Mode selection">
+      <button class="nav-tab active" id="tab-home" onclick="resetAll()">
+        <span class="tab-icon">🏠</span>
+        <span class="tab-label">Home</span>
+      </button>
+      <button class="nav-tab" id="tab-send" onclick="showView('sender')">
+        <span class="tab-icon">📤</span>
+        <span class="tab-label">Send</span>
+      </button>
+      <button class="nav-tab" id="tab-receive" onclick="showView('receiver')">
+        <span class="tab-icon">📥</span>
+        <span class="tab-label">Receive</span>
+      </button>
+    </nav>
+
+    <!-- Header Actions & Network Status Pill -->
+    <div class="header-actions">
+      <div class="device-pill" id="device-pill" title="Detected device format">
+        <span class="device-icon" id="device-icon">💻</span>
+        <span class="device-name" id="device-name">Desktop</span>
+      </div>
+
+      <button class="server-status-pill" id="server-status-pill" onclick="toggleNetworkModal()" title="View LAN & Connection details">
+        <span class="status-indicator-dot" id="server-status-dot"></span>
+        <span id="server-status-text">Detecting server…</span>
+        <span class="pill-chevron">⚙</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Main Responsive Content Container -->
+<main class="app-main">
+  <div class="container">
+
+    <!-- LANDING VIEW -->
+    <section id="view-landing" class="view active" aria-labelledby="landing-heading">
+      <div class="hero-section">
+        <div class="hero-badge">
+          <span class="badge-sparkle">✨</span> Direct High-Speed Wi-Fi & WebRTC Transfer
+        </div>
+        <h1 id="landing-heading" class="hero-title">
+          Share files & text <span class="gradient-text">effortlessly</span> across all your screens
+        </h1>
+        <p class="hero-subtitle">
+          Direct device-to-device streaming. No size limits on your local network, zero cloud storage, end-to-end encrypted.
+        </p>
+
+        <!-- Feature Badges -->
+        <div class="info-pills" role="list">
+          <div class="pill" role="listitem"><span>🔒</span> End-to-end encrypted</div>
+          <div class="pill" role="listitem"><span>⚡</span> Direct P2P transfer</div>
+          <div class="pill" role="listitem"><span>📱</span> Android & PC pairing</div>
+          <div class="pill" role="listitem"><span>🚫</span> Zero cloud storage</div>
+          <div class="pill" role="listitem"><span>📋</span> Real-time clipboard</div>
+        </div>
+      </div>
+
+      <!-- Action Role Cards -->
+      <div class="role-grid">
+        <button class="role-card send-card" onclick="showView('sender')">
+          <div class="card-glow"></div>
+          <div class="role-card-top">
+            <div class="role-icon-box send">
+              <span class="role-icon">📤</span>
+            </div>
+            <span class="role-chip">SENDER</span>
+          </div>
+          <div class="role-card-content">
+            <h2 class="role-title">Send Files & Notes</h2>
+            <p class="role-desc">Select any file, photo, video, or paste clipboard notes to stream directly to another device.</p>
+          </div>
+          <div class="role-card-footer">
+            <span class="role-action-text">Start Sending</span>
+            <span class="role-action-arrow">→</span>
+          </div>
+        </button>
+
+        <button class="role-card recv-card" onclick="showView('receiver')">
+          <div class="card-glow"></div>
+          <div class="role-card-top">
+            <div class="role-icon-box recv">
+              <span class="role-icon">📥</span>
+            </div>
+            <span class="role-chip">RECEIVER</span>
+          </div>
+          <div class="role-card-content">
+            <h2 class="role-title">Receive Files & Notes</h2>
+            <p class="role-desc">Enter the 6-digit transfer code or scan the QR code from the sender to download instantly.</p>
+          </div>
+          <div class="role-card-footer">
+            <span class="role-action-text">Enter Code</span>
+            <span class="role-action-arrow">→</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Step-by-Step Helper for Android + Desktop -->
+      <div class="quick-guide-card">
+        <div class="guide-header">
+          <div class="guide-icon">💡</div>
+          <div>
+            <div class="guide-title">How to connect Android & Desktop</div>
+            <div class="guide-sub">INSTANT LOCAL SHARING IN 3 SECONDS</div>
+          </div>
+        </div>
+        <div class="guide-steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Connect Wi-Fi</div>
+              <div class="step-desc">Ensure both devices are on the same Wi-Fi or mobile hotspot.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Generate Code / QR</div>
+              <div class="step-desc">Pick your file on PC and get a 6-digit code or instant QR.</div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Scan & Receive</div>
+              <div class="step-desc">Scan with your phone camera or enter the code to download!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SENDER VIEW -->
+    <section id="view-sender" class="view" aria-labelledby="sender-title">
+      <div class="view-header-bar">
+        <button class="btn-ghost btn-back" onclick="resetAll()">
+          <span class="btn-icon">←</span> Back
+        </button>
+        <div class="view-header-title">
+          <span class="view-step-chip">SENDER MODE</span>
+          <span class="view-step-detail">Select File · Share Code or QR · Stream P2P</span>
+        </div>
+      </div>
+
+      <!-- Sender Responsive Dashboard: Dual-column on desktop, smooth stacked cards on mobile -->
+      <div class="sender-layout">
+        
+        <!-- Left Column: File Drop & Transfer Stats -->
+        <div class="sender-column-file">
+          <div class="card card-primary">
+            <div class="card-header">
+              <div class="card-header-icon send-icon">📁</div>
+              <div>
+                <h2 id="sender-title" class="card-title">Choose File to Stream</h2>
+                <div class="card-subtitle">STEP 1 — CHOOSE ANY FILE UP TO 350 MB</div>
+              </div>
+            </div>
+            <div class="card-body">
+
+              <!-- File Drop Zone -->
+              <div id="dropzone" class="dropzone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                <input type="file" id="file-input" onchange="onFileSelect(event)">
+                <div class="dropzone-visual">
+                  <div class="dropzone-icon-ring">
+                    <span class="dropzone-icon">🗂️</span>
+                  </div>
+                  <div class="dropzone-text">Drop your file here</div>
+                  <div class="dropzone-hint">or tap to browse your phone / computer</div>
+                  <div class="dropzone-specs">
+                    <span class="spec-tag">Max 350 MB</span>
+                    <span class="spec-tag">Any Format</span>
+                    <span class="spec-tag">Encrypted</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Selected File Preview -->
+              <div id="sender-file-preview"></div>
+
+              <!-- Start Transfer Button -->
+              <div class="action-btn-row" id="send-btn-row">
+                <button class="btn btn-accent btn-large" id="send-btn" onclick="initSender()">
+                  <span class="btn-icon">⚡</span> Generate Transfer Code & QR
+                </button>
+              </div>
+
+              <!-- Transfer Progress -->
+              <div class="progress-wrap" id="send-progress">
+                <div class="progress-header">
+                  <div class="progress-title-wrap">
+                    <span class="progress-pulse-dot"></span>
+                    <span class="progress-title">Streaming to Receiver</span>
+                  </div>
+                  <span id="send-pct" class="progress-pct">0%</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill" id="send-fill"></div>
+                </div>
+                <div id="send-speed" class="speed-metrics"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Code, QR & Status -->
+        <div class="sender-column-code">
+          
+          <!-- Code Section Card -->
+          <div id="sender-code-section" class="card card-code" style="display:none">
+            <div class="card-header">
+              <div class="card-header-icon code-icon">🔑</div>
+              <div>
+                <div class="card-title">Share Code or QR</div>
+                <div class="card-subtitle">STEP 2 — RECEIVER CONNECTS WITH THIS CODE</div>
+              </div>
+            </div>
+            <div class="card-body">
+              
+              <!-- 6-Digit Display -->
+              <div class="code-section">
+                <div class="code-label">6-DIGIT ONE-TIME CODE</div>
+                <div class="code-box-wrapper">
+                  <div class="code-box" id="code-display"></div>
+                </div>
+                
+                <div class="code-action-buttons">
+                  <button class="btn btn-secondary btn-sm" onclick="copyCode()" id="copy-code-btn" title="Copy code to clipboard">
+                    <span class="btn-icon">📋</span> Copy Code
+                  </button>
+                  <button class="btn btn-secondary btn-sm" onclick="copyDirectLink()" id="copy-link-btn" title="Copy direct connection URL">
+                    <span class="btn-icon">🔗</span> Copy Link
+                  </button>
+                  <button class="btn btn-secondary btn-sm" onclick="toggleQrDisplay()" id="qr-toggle-btn" title="Toggle QR Code for Android Camera">
+                    <span class="btn-icon">📱</span> <span id="qr-toggle-text">Show QR</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- QR Code Card for Android Camera Pairing -->
+              <div id="sender-qr-panel" class="qr-panel" style="display:none">
+                <div class="qr-card">
+                  <div class="qr-card-header">
+                    <span class="qr-mobile-icon">📱</span>
+                    <span>Scan with Android Camera</span>
+                  </div>
+                  <div class="qr-code-frame" id="qrcode-container"></div>
+                  <div class="qr-card-footer" id="qr-direct-url-preview">
+                    Opens receiver & connects automatically
+                  </div>
+                </div>
+              </div>
+
+              <!-- Connection Status Bar -->
+              <div id="sender-status" class="status-bar info">
+                <div class="status-dot pulse"></div>
+                <span>Waiting for receiver to connect…</span>
+              </div>
+
+              <!-- Waiting Animation -->
+              <div id="sender-waiting" class="waiting-anim">
+                <div class="waiting-dot"></div>
+                <div class="waiting-dot"></div>
+                <div class="waiting-dot"></div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- SENDER TEXT & CLIPBOARD SHARING SECTION -->
+      <div id="sender-text-section" class="text-share-card" style="display:none">
+        <div class="text-share-header">
+          <div class="text-share-title">
+            <span class="text-share-icon">💬</span>
+            <div>
+              <div class="text-share-h1">Real-Time Text & Clipboard</div>
+              <div class="text-share-sub">INSTANT P2P SYNC WITH RECEIVER</div>
+            </div>
+          </div>
+          <span class="peer-status-pill online" id="sender-peer-pill">🟢 Connected</span>
+        </div>
+
+        <div class="text-input-wrap">
+          <textarea id="sender-text-input" class="text-share-input" placeholder="Type or paste text, links, or notes to send to receiver…" rows="3"></textarea>
+          <div class="text-actions-bar">
+            <div class="text-hint">Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to send</div>
+            <div class="text-btn-group">
+              <button type="button" class="btn-text-ghost" onclick="pasteToSenderInput()" title="Paste from clipboard">
+                📋 Paste
+              </button>
+              <button type="button" class="btn btn-accent btn-send-text" onclick="sendSharedText('sender')" id="sender-send-btn">
+                <span>Send Text</span> 📤
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reply from receiver (if receiver sends text back) -->
+        <div id="sender-reply-display" class="received-text-box reply-box" style="display:none">
+          <div class="received-text-header">
+            <div class="received-text-meta">
+              <span class="meta-tag">REPLY FROM RECEIVER</span>
+              <span class="text-timestamp" id="sender-reply-time">Just now</span>
+            </div>
+            <button type="button" class="btn-copy-highlight" id="sender-copy-reply-btn" onclick="copySenderReplyText()">
+              <span class="copy-icon">📋</span>
+              <span class="copy-label">Copy Text</span>
+            </button>
+          </div>
+          <div class="received-text-content-wrap">
+            <pre class="received-text-content" id="sender-reply-content"></pre>
+          </div>
+        </div>
+
+        <!-- Sent Text History -->
+        <div id="sender-text-history-wrap" style="display:none" class="text-history-wrap">
+          <div class="history-label">Sent Text History (<span id="sender-history-count">0</span>)</div>
+          <div id="sender-text-history" class="text-history-list"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RECEIVER VIEW -->
+    <section id="view-receiver" class="view" aria-labelledby="receiver-title">
+      <div class="view-header-bar">
+        <button class="btn-ghost btn-back" onclick="resetAll()">
+          <span class="btn-icon">←</span> Back
+        </button>
+        <div class="view-header-title">
+          <span class="view-step-chip">RECEIVER MODE</span>
+          <span class="view-step-detail">Enter 6-Digit Code · Connect · Save to Device</span>
+        </div>
+      </div>
+
+      <div class="receiver-layout">
+        <div class="card card-primary receiver-card">
+          <div class="card-header">
+            <div class="card-header-icon recv-icon">📥</div>
+            <div>
+              <h2 id="receiver-title" class="card-title">Enter Transfer Code</h2>
+              <div class="card-subtitle">ENTER THE 6 DIGITS DISPLAYED ON THE SENDER SCREEN</div>
+            </div>
+          </div>
+          <div class="card-body">
+
+            <!-- Responsive 6-Digit Code Input Row: dynamic flex for 320px to 4K displays -->
+            <div class="code-input-container">
+              <div class="code-input-row" id="code-inputs" onpaste="handleCodePaste(event)">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" oninput="codeInput(this,0)" onkeydown="codeBack(event,0)" onpaste="handleCodePaste(event)" id="ci0" aria-label="Code digit 1">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" oninput="codeInput(this,1)" onkeydown="codeBack(event,1)" onpaste="handleCodePaste(event)" id="ci1" aria-label="Code digit 2">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" oninput="codeInput(this,2)" onkeydown="codeBack(event,2)" onpaste="handleCodePaste(event)" id="ci2" aria-label="Code digit 3">
+                <span class="code-input-sep" aria-hidden="true">·</span>
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" oninput="codeInput(this,3)" onkeydown="codeBack(event,3)" onpaste="handleCodePaste(event)" id="ci3" aria-label="Code digit 4">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" oninput="codeInput(this,4)" onkeydown="codeBack(event,4)" onpaste="handleCodePaste(event)" id="ci4" aria-label="Code digit 5">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" oninput="codeInput(this,5)" onkeydown="codeBack(event,5)" onpaste="handleCodePaste(event)" id="ci5" aria-label="Code digit 6">
+              </div>
+
+              <!-- Quick Helper for Mobile -->
+              <div class="paste-helper-row">
+                <button type="button" class="btn-text-ghost" onclick="pasteCodeToInputs()" id="paste-code-btn">
+                  📋 Paste Code from Clipboard
+                </button>
+              </div>
+            </div>
+
+            <!-- Connect Button -->
+            <div class="action-btn-row">
+              <button class="btn btn-accent btn-large" id="connect-btn" onclick="initReceiver()" disabled>
+                <span class="btn-icon">🔗</span> Connect to Sender
+              </button>
+            </div>
+
+            <!-- Receiver Status -->
+            <div id="recv-status"></div>
+
+            <!-- Receiver Progress -->
+            <div class="progress-wrap" id="recv-progress">
+              <div class="progress-header">
+                <div class="progress-title-wrap">
+                  <span class="progress-pulse-dot"></span>
+                  <span class="progress-title">Receiving Stream…</span>
+                </div>
+                <span id="recv-pct" class="progress-pct">0%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="recv-fill"></div>
+              </div>
+              <div id="recv-speed" class="speed-metrics"></div>
+            </div>
+
+            <!-- Download Complete Card -->
+            <div class="download-card" id="download-card">
+              <div class="download-celebrate-glow"></div>
+              <div class="file-big-icon">📦</div>
+              <div class="dl-name" id="dl-name">file.zip</div>
+              <div class="dl-size" id="dl-size">0 MB</div>
+              <button class="btn btn-green btn-large" id="dl-btn">
+                <span class="btn-icon">⬇</span> Save / Download File
+              </button>
+            </div>
+
+            <!-- RECEIVER TEXT SHARING SECTION -->
+            <div id="receiver-text-section" class="text-share-card" style="display:none">
+              <div class="text-share-header">
+                <div class="text-share-title">
+                  <span class="text-share-icon">💬</span>
+                  <div>
+                    <div class="text-share-h1">Shared Text from Sender</div>
+                    <div class="text-share-sub">INSTANT P2P TEXT & CLIPBOARD</div>
+                  </div>
+                </div>
+                <span class="peer-status-pill online" id="receiver-peer-pill">🟢 Connected</span>
+              </div>
+
+              <!-- Awaiting State -->
+              <div id="receiver-text-empty" class="text-empty-state">
+                <span class="empty-icon">⏳</span>
+                <span>Connected! Waiting for sender to share text or notes…</span>
+              </div>
+
+              <!-- Latest Received Text Box -->
+              <div id="receiver-text-display" class="received-text-box" style="display:none">
+                <div class="received-text-header">
+                  <div class="received-text-meta">
+                    <span class="meta-tag">RECEIVED TEXT</span>
+                    <span class="text-timestamp" id="receiver-text-time">Just now</span>
+                  </div>
+                  <button type="button" class="btn-copy-highlight" id="receiver-copy-btn" onclick="copyLatestReceivedText()">
+                    <span class="copy-icon">📋</span>
+                    <span class="copy-label">Copy Text</span>
+                  </button>
+                </div>
+                <div class="received-text-content-wrap">
+                  <pre class="received-text-content" id="receiver-text-content"></pre>
+                </div>
+              </div>
+
+              <!-- Received Text History -->
+              <div id="receiver-text-history-wrap" style="display:none" class="text-history-wrap">
+                <div class="history-label">Previous Messages (<span id="receiver-history-count">0</span>)</div>
+                <div id="receiver-text-history" class="text-history-list"></div>
+              </div>
+
+              <!-- Optional Reply Section -->
+              <div class="text-reply-wrap" id="receiver-reply-wrap">
+                <div class="reply-toggle-label" onclick="toggleReceiverReply()" role="button" tabindex="0">
+                  <span id="reply-toggle-icon">▸</span> <span>Reply to sender with text</span>
+                </div>
+                <div id="receiver-reply-box" style="display:none; margin-top:10px">
+                  <textarea id="receiver-text-input" class="text-share-input" placeholder="Type a message or note back to sender…" rows="2"></textarea>
+                  <div class="text-actions-bar">
+                    <div class="text-hint">Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd></div>
+                    <button type="button" class="btn btn-accent btn-send-text" onclick="sendSharedText('receiver')" id="receiver-send-btn">
+                      <span>Send Reply</span> 📤
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- LAN & NETWORK STATUS MODAL -->
+<div id="network-modal" class="modal-backdrop" onclick="closeNetworkModal(event)">
+  <div class="modal-window" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <span class="modal-icon">🌐</span>
+        <div>
+          <div class="modal-title">Network & Device Connection</div>
+          <div class="modal-subtitle">FILE TRANSFER CONFIGURATION</div>
+        </div>
+      </div>
+      <button class="modal-close-btn" onclick="toggleNetworkModal()" aria-label="Close modal">✕</button>
+    </div>
+    <div class="modal-body">
+      
+      <div class="network-info-grid">
+        <div class="info-card">
+          <div class="info-card-label">THIS DEVICE</div>
+          <div class="info-card-val" id="modal-device-val">Desktop (localhost)</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">SIGNALING SERVER</div>
+          <div class="info-card-val" id="modal-server-val">Detecting…</div>
+        </div>
+      </div>
+
+      <div class="lan-share-box">
+        <div class="lan-share-header">
+          <span class="lan-icon">📱</span>
+          <div>
+            <div class="lan-title">Open on Android / Other Devices</div>
+            <div class="lan-desc">Both devices must be on the same Wi-Fi network</div>
+          </div>
+        </div>
+        <div class="lan-url-row">
+          <input type="text" id="modal-mobile-url" class="lan-url-input" readonly value="http://localhost:9000">
+          <button class="btn btn-accent btn-sm" onclick="copyMobileUrl()" id="modal-copy-url-btn">
+            📋 Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick QR code for opening FileDrop on Android -->
+      <div class="modal-qr-section">
+        <div class="modal-qr-label">SCAN TO OPEN ON PHONE:</div>
+        <div class="modal-qr-frame" id="modal-qrcode-container"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
